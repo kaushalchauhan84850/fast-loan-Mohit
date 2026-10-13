@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
-import { LOAN_CONFIG, calculateEmi } from '../utils/interest.js';
+import { LOAN_CONFIG, calculateLoanTerms } from '../utils/interest.js';
 import { formatINR } from '../utils/format.js';
 import { storageGet, storageSet, storageRemove } from '../utils/storage.js';
 import StepsProgress from '../components/ui/StepsProgress.jsx';
@@ -17,8 +17,10 @@ import StepFace from '../components/apply/StepFace.jsx';
 import StepReview from '../components/apply/StepReview.jsx';
 import { IconCheckCircle, IconArrowRight } from '../components/ui/Icons.jsx';
 
-const STEPS = ['Personal details', 'Loan & EMI', 'KYC documents', 'Face verification', 'Review & submit'];
-const DRAFT_KEY = 'tl_apply_draft'; // personal + loan only — no KYC or biometric data
+const STEPS = ['Personal & address', 'Loan amount', 'KYC documents', 'Face verification', 'Review & submit'];
+const DRAFT_KEY = 'tl_apply_draft'; // personal + loan only — no KYC secrets or biometric data
+
+const EMPTY_ADDRESS = { line1: '', line2: '', city: '', state: '', postalCode: '', country: 'India' };
 
 const EMPTY_STATE = {
   personal: null,
@@ -47,18 +49,13 @@ export default function Apply() {
   const [submitting, setSubmitting] = useState(false);
   const [submittedId, setSubmittedId] = useState(null);
 
-  // Prefill amount/tenure when arriving from the calculator (?amount=&tenure=)
+  // Prefill amount when arriving from the calculator (?amount=)
   useEffect(() => {
     const amount = Number(searchParams.get('amount'));
-    const tenure = Number(searchParams.get('tenure'));
-    if (amount || tenure) {
+    if (amount) {
       setState((s) => ({
         ...s,
-        loan: {
-          amount: amount || s.loan?.amount || 100000,
-          tenure: tenure || s.loan?.tenure || 12,
-          purpose: s.loan?.purpose || 'personal',
-        },
+        loan: { amount, purpose: s.loan?.purpose || 'personal' },
       }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,6 +82,25 @@ export default function Apply() {
   const goTo = (s) => {
     if (s <= maxReachableStep) setStep(s);
   };
+
+  const personalDefaults = useMemo(
+    () =>
+      state.personal ?? {
+        fullName: user?.fullName ?? '',
+        dob: '',
+        employmentType: '',
+        monthlyIncome: '',
+        permanentAddress: { ...EMPTY_ADDRESS },
+        sameAsPermanent: true,
+        currentAddress: { ...EMPTY_ADDRESS },
+      },
+    [state.personal, user?.fullName]
+  );
+
+  const previewTerms = useMemo(
+    () => calculateLoanTerms({ principal: state.loan?.amount || 100000, disbursementDate: new Date() }),
+    [state.loan?.amount]
+  );
 
   const handleSubmit = async (consents) => {
     setSubmitting(true);
@@ -154,8 +170,8 @@ export default function Apply() {
               Loan application
             </h1>
             <p className="mt-1 text-sm text-navy-600">
-              {formatINR(LOAN_CONFIG.minAmount)}–{formatINR(LOAN_CONFIG.maxAmount)} ·{' '}
-              {LOAN_CONFIG.monthlyInterestRate * 100}% monthly (reducing) · 5 quick steps
+              {formatINR(LOAN_CONFIG.minAmount)}–{formatINR(LOAN_CONFIG.maxAmount)} · 0.8% per day ·
+              one repayment on the 28th · 5 quick steps
             </p>
           </div>
           <p className="rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-navy-600 shadow-soft">
@@ -186,7 +202,7 @@ export default function Apply() {
           <div className="mt-8">
             {step === 0 && (
               <StepPersonal
-                defaultValues={state.personal ?? { fullName: user?.fullName ?? '' }}
+                defaultValues={personalDefaults}
                 onNext={(personal) => {
                   setState((s) => ({ ...s, personal }));
                   setStep(1);
@@ -195,7 +211,7 @@ export default function Apply() {
             )}
             {step === 1 && (
               <StepLoan
-                defaultValues={state.loan ?? { amount: 100000, tenure: 12, purpose: 'personal' }}
+                defaultValues={state.loan ?? { amount: 100000, purpose: 'personal' }}
                 onBack={() => setStep(0)}
                 onNext={(loan) => {
                   setState((s) => ({ ...s, loan }));
@@ -239,8 +255,8 @@ export default function Apply() {
 
         <p className="mt-4 text-center text-xs text-navy-500">
           Draft progress (personal & loan details only) is saved on this device. KYC data and selfie
-          are never stored in your browser. EMI today:{' '}
-          {formatINR(calculateEmi(state.loan?.amount || 100000, LOAN_CONFIG.monthlyInterestRate, state.loan?.tenure || 12))}
+          are never stored in your browser. Preview today: repay{' '}
+          {formatINR(previewTerms.totalRepayable)} by the 28th
           {' · '}
           <Link to="/terms" className="font-semibold text-navy-700 underline underline-offset-2">
             Terms

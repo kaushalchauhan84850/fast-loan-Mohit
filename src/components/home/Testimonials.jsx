@@ -10,7 +10,7 @@ const TESTIMONIALS = [
     city: 'Bengaluru',
     initials: 'PN',
     quote:
-      'I could see exactly what I would pay — interest, EMI, even the late fee rules — before I signed. The money reached my account the next morning.',
+      'I could see exactly what I would pay — interest, due date, even the late fee rules — before I signed. The money reached my account the next morning.',
     loan: 'Personal loan · ₹2,00,000',
   },
   {
@@ -26,7 +26,7 @@ const TESTIMONIALS = [
     city: 'Lucknow',
     initials: 'SQ',
     quote:
-      'I was two days late on an EMI once. The dashboard showed the grace period protecting me and the exact penalty I would owe after — no shock, no hidden charge.',
+      'I was two days late on my repayment once. The dashboard showed the grace period protecting me and the exact penalty I would owe after — no shock, no hidden charge.',
     loan: 'Education loan · ₹80,000',
   },
 ];

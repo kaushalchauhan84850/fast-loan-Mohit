@@ -18,7 +18,7 @@ export default function NotFound() {
           Back to home <IconArrowRight size={17} />
         </Button>
         <Button to="/emi-calculator" variant="outline" size="lg">
-          Open EMI calculator
+          Open loan calculator
         </Button>
       </div>
     </div>

@@ -1,24 +1,16 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../../context/LanguageContext.jsx';
-import { formatINR } from '../../utils/format.js';
-import { calculateEmi } from '../../utils/interest.js';
-import {
-  IconStar,
-  IconZap,
-  IconShieldCheck,
-  IconLock,
-  IconArrowRight,
-  IconCheck,
-  IconBanknote,
-  IconUser,
-} from '../ui/Icons.jsx';
+import { formatINR, formatDate } from '../../utils/format.js';
+import { calculateLoanTerms, LOAN_CONFIG } from '../../utils/interest.js';
+import { IconStar, IconZap, IconShieldCheck, IconLock, IconArrowRight, IconCheck, IconBanknote, IconUser } from '../ui/Icons.jsx';
 
 const TRUST_POINTS = ['trust.rating', 'trust.disbursed', 'trust.customers', 'trust.encryption'];
 const TRUST_ICONS = [IconStar, IconBanknote, IconUser, IconLock];
 
 function LoanMockCard() {
-  const emi = calculateEmi(200000, 0.02, 12);
+  // Preview a loan as if disbursed today: single repayment on the 28th.
+  const terms = calculateLoanTerms({ principal: 200000, disbursementDate: new Date() });
   return (
     <motion.div
       initial={{ opacity: 0, y: 32 }}
@@ -39,26 +31,26 @@ function LoanMockCard() {
           </span>
         </div>
         <div className="mt-5">
-          <p className="text-xs uppercase tracking-wider text-white/50">Outstanding principal</p>
+          <p className="text-xs uppercase tracking-wider text-white/50">Principal</p>
           <p className="mt-1 text-3xl font-extrabold text-white">{formatINR(200000)}</p>
         </div>
         <div className="mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-xl bg-white/10 p-3">
-            <p className="text-xs text-white/60">Monthly EMI</p>
-            <p className="mt-0.5 text-lg font-bold text-white">{formatINR(emi)}</p>
+            <p className="text-xs text-white/60">Repay by</p>
+            <p className="mt-0.5 text-base font-bold text-white">{formatDate(terms.dueDate)}</p>
           </div>
           <div className="rounded-xl bg-white/10 p-3">
             <p className="text-xs text-white/60">Interest</p>
-            <p className="mt-0.5 text-lg font-bold text-emerald-300">2%/mo</p>
+            <p className="mt-0.5 text-lg font-bold text-emerald-300">0.8%/day</p>
           </div>
         </div>
         <div className="mt-5">
           <div className="flex justify-between text-xs text-white/60">
-            <span>EMI 2 of 12</span>
-            <span>Next due in 9 days</span>
+            <span>Day 1 of {terms.interestDays}</span>
+            <span>{formatINR(terms.interest)} accrued at due date</span>
           </div>
           <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/15">
-            <div className="h-full w-[16%] rounded-full bg-emerald-400" />
+            <div className="h-full w-[4%] rounded-full bg-emerald-400" />
           </div>
         </div>
       </motion.div>
@@ -165,12 +157,12 @@ export default function Hero() {
             transition={{ duration: 0.55, delay: 0.34 }}
             className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-navy-300"
           >
-            {t('hero.note').split('·').map((part, i, arr) => (
+            {t('hero.note').split('·').map((part, i) => (
               <li key={i} className="flex items-center gap-1.5">
                 {i > 0 && <IconCheck size={14} className="mr-1.5 text-emerald-400" aria-hidden="true" />}
                 {i === 0 && <IconCheck size={14} className="mr-1 text-emerald-400" aria-hidden="true" />}
                 {part.trim()}
-                {i < arr.length - 1 && <span className="sr-only">;</span>}
+                {i < t('hero.note').split('·').length - 1 && <span className="sr-only">;</span>}
               </li>
             ))}
           </motion.ul>

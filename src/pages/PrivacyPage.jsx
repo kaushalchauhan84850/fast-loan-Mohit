@@ -15,7 +15,7 @@ const SECTIONS = [
     body: [
       'To verify your identity and meet applicable KYC obligations.',
       'To evaluate, disburse and service your loan, including calculating interest and penalties exactly as disclosed.',
-      'To communicate about your application, EMIs and overdue accounts by SMS, email or call.',
+      'To communicate about your application, repayments and overdue accounts by SMS, email or call.',
       'We never sell your personal data to third parties.',
     ],
   },
@@ -23,7 +23,7 @@ const SECTIONS = [
     title: '3. Sharing',
     body: [
       'KYC verification partners, under strict confidentiality and only for verification purposes.',
-      'Payment gateways for processing your EMI payments.',
+      'Payment gateways for processing your repayments.',
       'Regulators or law-enforcement where the law requires it.',
     ],
   },

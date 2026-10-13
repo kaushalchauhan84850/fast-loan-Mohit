@@ -19,11 +19,11 @@ export default function Home() {
       {/* EMI calculator section */}
       <section className="bg-navy-50/60 py-20 sm:py-24" aria-labelledby="home-calc-title">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <SectionHeading
-            eyebrow="EMI Calculator"
-            title="See your EMI before you apply"
-            subtitle="Move the sliders. Interest, total repayment and late-fee rules are all out in the open — that's the TrustLend promise."
-          />
+        <SectionHeading
+          eyebrow="Loan Calculator"
+          title="See your repayment before you apply"
+          subtitle="Move the slider. Interest, total repayment and late-fee rules are all out in the open — that's the TrustLend promise."
+        />
           <div className="mt-10">
             <EmiCalculator />
           </div>
@@ -41,8 +41,8 @@ export default function Home() {
             Ready for money that moves at your speed?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-navy-300">
-            Sign up, verify KYC in minutes, and apply for up to ₹5,00,000 at 2% monthly — with every
-            charge disclosed up front.
+            Sign up, verify KYC in minutes, and apply for up to ₹5,00,000 at 0.8% per day — one
+            repayment on the 28th, with every charge disclosed up front.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Button to="/apply" size="lg" className="!bg-emerald-500 !text-navy-950 hover:!bg-emerald-400">

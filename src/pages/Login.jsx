@@ -89,26 +89,26 @@ export default function Login() {
               error={errors.identifier?.message}
               {...register('identifier')}
             />
-            <div className="relative">
-              <Input
-                label="Password"
-                required
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                placeholder="Your password"
-                icon={IconLock}
-                error={errors.password?.message}
-                {...register('password')}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-3 top-[34px] text-navy-400 transition-colors hover:text-navy-700"
-              >
-                <IconEye size={18} />
-              </button>
-            </div>
+            <Input
+              label="Password"
+              required
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="current-password"
+              placeholder="Your password"
+              icon={IconLock}
+              error={errors.password?.message}
+              rightElement={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="rounded-md p-1.5 text-navy-400 transition-colors hover:bg-navy-50 hover:text-navy-700"
+                >
+                  <IconEye size={18} />
+                </button>
+              }
+              {...register('password')}
+            />
 
             <Button type="submit" size="lg" fullWidth isLoading={isSubmitting}>
               Log in

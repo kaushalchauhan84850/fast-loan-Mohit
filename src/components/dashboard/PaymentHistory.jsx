@@ -1,15 +1,16 @@
 import Badge from '../ui/Badge.jsx';
+import { LOAN_CONFIG } from '../../utils/interest.js';
 import { formatINR, formatDateTime } from '../../utils/format.js';
 import { IconCheckCircle } from '../ui/Icons.jsx';
 
-/** Payment history list: EMI number, split (principal/interest/penalty), date, method. */
+/** Payment history: each row is a full single-cycle repayment. */
 export default function PaymentHistory({ payments }) {
   if (payments.length === 0) {
     return (
       <div className="rounded-2xl border border-navy-100 bg-white p-8 text-center shadow-soft">
         <p className="text-sm font-semibold text-navy-700">No payments yet</p>
         <p className="mt-1 text-xs text-navy-500">
-          Your EMI payments will appear here with a full interest and penalty split.
+          Your repayment will appear here with a full interest and penalty split.
         </p>
       </div>
     );
@@ -26,10 +27,11 @@ export default function PaymentHistory({ payments }) {
             </span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-navy-900">
-                EMI {p.emiNo} · {formatINR(p.amount, { decimals: true })}
+                Loan repaid · {formatINR(p.amount, { decimals: true })}
               </p>
               <p className="text-xs text-navy-500">
-                Principal {formatINR(p.principal)} · Interest {formatINR(p.interest)}
+                Principal {formatINR(p.principal)} · Interest {formatINR(p.interest)} (
+                {LOAN_CONFIG.dailyInterestRate * 100}%/day)
                 {p.penalty > 0 && (
                   <span className="font-semibold text-amber-700"> · Penalty {formatINR(p.penalty)}</span>
                 )}

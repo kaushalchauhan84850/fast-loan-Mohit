@@ -3,7 +3,7 @@ import { LOAN_CONFIG } from '../utils/interest.js';
 
 export default function TermsPage() {
   useDocumentTitle('Terms of service');
-  const rate = (LOAN_CONFIG.monthlyInterestRate * 100).toFixed(0);
+  const rate = (LOAN_CONFIG.dailyInterestRate * 100).toFixed(1);
   const penalty = (LOAN_CONFIG.dailyPenaltyRate * 100).toFixed(1);
   return (
     <div className="py-14">
@@ -28,19 +28,22 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-bold text-navy-950">2. Interest and repayment</h2>
             <p className="mt-2">
-              Loans carry a monthly interest of <strong>{rate}%</strong> computed on the reducing
-              outstanding balance and are repaid in equated monthly instalments (EMIs) shown in your
-              schedule. You may prepay any amount at any time without charge.
+              Loans carry simple interest of <strong>{rate}% per day</strong> on the principal, from
+              the disbursement date up to the repayment due date. Every loan is a single-cycle loan:
+              one repayment of Principal + Interest, due on the <strong>28th</strong> of the month
+              (same month if disbursed between the 1st and 15th, the following month if disbursed on
+              the 16th or later). You may prepay any amount at any time without charge.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-bold text-navy-950">3. Late payment and penalty</h2>
             <p className="mt-2">
-              Each EMI has a <strong>{LOAN_CONFIG.gracePeriodDays}-day grace period</strong> after
-              its due date. If the EMI remains unpaid after the grace period, a penalty of{' '}
-              <strong>{penalty}% of the overdue EMI per day</strong> accrues daily until the overdue
-              amount is paid in full. The dashboard discloses the running penalty at all times.
+              Interest stops accruing on the due date. Each repayment has a{' '}
+              <strong>{LOAN_CONFIG.gracePeriodDays}-day grace period</strong> after its due date. If
+              the amount remains unpaid after the grace period, a penalty of{' '}
+              <strong>{penalty}% of the overdue amount per day</strong> accrues daily until it is
+              paid in full. The dashboard discloses the running penalty at all times.
             </p>
           </section>
 

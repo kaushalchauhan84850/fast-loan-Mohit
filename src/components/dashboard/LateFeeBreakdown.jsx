@@ -1,44 +1,37 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { calculateDues, LOAN_CONFIG } from '../../utils/interest.js';
+import { LOAN_CONFIG } from '../../utils/interest.js';
 import { formatINR, formatDate } from '../../utils/format.js';
 import { IconAlertTriangle, IconInfo } from '../ui/Icons.jsx';
 
 /**
- * Late-fee transparency panel: the exact money math behind the next EMI —
- * principal part, monthly interest, days overdue, daily penalty accrued —
+ * Transparency panel: the exact math behind what is owed — principal, daily
+ * interest to the due date, days overdue and daily penalty accrued —
  * recomputed live from the shared interest engine.
  */
-export default function LateFeeBreakdown({ loan, nextDue }) {
-  const dues = useMemo(
-    () =>
-      calculateDues({
-        principal: nextDue.balanceBefore,
-        monthlyInterestRate: loan.monthlyInterestRate,
-        dueDate: nextDue.dueDate,
-        principalDue: nextDue.principal,
-        overdueAmount: nextDue.emi,
-      }),
-    [loan, nextDue]
-  );
-
+export default function LateFeeBreakdown({ loan, dues }) {
   const isOverdue = dues.daysOverdue > 0;
   const inGrace = !isOverdue && dues.daysLate > 0;
 
   const rows = [
-    ['Principal due this EMI', formatINR(dues.principalDue, { decimals: true })],
-    ['Monthly interest (2% of outstanding)', formatINR(dues.interestDue, { decimals: true })],
-    ['Due date', formatDate(nextDue.dueDate)],
+    ['Principal', formatINR(loan.principal, { decimals: true })],
+    ['Daily interest rate', `${LOAN_CONFIG.dailyInterestRate * 100}% per day`],
+    [
+      'Interest days (disbursed → due)',
+      `${dues.interestDays} days (${formatDate(loan.disbursementDate)} → ${formatDate(dues.dueDate)})`,
+    ],
+    ['Interest', formatINR(dues.interest, { decimals: true })],
+    ['Total repayable on due date', formatINR(dues.totalRepayable, { decimals: true })],
     [
       'Days overdue',
       isOverdue
-        ? `${dues.daysOverdue} day${dues.daysOverdue === 1 ? '' : 's'} (grace of ${LOAN_CONFIG.gracePeriodDays} days used)`
+        ? `${dues.daysOverdue} day${dues.daysOverdue === 1 ? '' : 's'} past the ${LOAN_CONFIG.gracePeriodDays}-day grace (late ${dues.daysLate} days total)`
         : inGrace
-          ? `0 — within ${dues.graceRemaining}-day grace`
+          ? `0 — within ${dues.graceRemaining}-day grace (late ${dues.daysLate} day${dues.daysLate === 1 ? '' : 's'})`
           : '0 — on time',
     ],
     [
-      'Penalty accrued (0.1%/day)',
+      `Penalty accrued (${LOAN_CONFIG.dailyPenaltyRate * 100}%/day)`,
       dues.penaltyAccrued > 0
         ? `${formatINR(dues.penaltyAccrued, { decimals: true })} · grows daily until paid`
         : '₹0',
@@ -60,8 +53,8 @@ export default function LateFeeBreakdown({ loan, nextDue }) {
         <div>
           <h3 className="text-sm font-bold text-navy-950">
             {isOverdue
-              ? `EMI ${nextDue.no} is overdue — here's exactly what you owe`
-              : `EMI ${nextDue.no} breakdown`}
+              ? 'Your loan is overdue — here is exactly what you owe'
+              : 'Repayment breakdown'}
           </h3>
           <p className="mt-0.5 text-xs text-navy-500">
             Live figures from the same calculator our systems use. Nothing hidden.
@@ -73,7 +66,11 @@ export default function LateFeeBreakdown({ loan, nextDue }) {
         {rows.map(([label, value]) => (
           <div key={label} className="flex items-center justify-between gap-4 py-2.5">
             <dt className="text-navy-600">{label}</dt>
-            <dd className={`text-right font-bold ${isOverdue && label === 'Penalty accrued (0.1%/day)' ? 'text-amber-700' : 'text-navy-900'}`}>
+            <dd
+              className={`text-right font-bold ${
+                isOverdue && label.startsWith('Penalty') ? 'text-amber-700' : 'text-navy-900'
+              }`}
+            >
               {value}
             </dd>
           </div>
@@ -100,9 +97,10 @@ export default function LateFeeBreakdown({ loan, nextDue }) {
 
       {isOverdue && (
         <p className="border-t border-amber-200 bg-amber-100/60 px-6 py-3 text-xs leading-relaxed text-amber-800">
-          Penalty is 0.1% of the overdue EMI ({formatINR(dues.overdueAmount)}) per day. It has
-          accrued for {dues.daysOverdue} day{dues.daysOverdue === 1 ? '' : 's'} so far and stops
-          growing the moment this EMI is paid.
+          Interest stopped accruing on the due date. The penalty is{' '}
+          {LOAN_CONFIG.dailyPenaltyRate * 100}% of the overdue amount (
+          {formatINR(dues.overdueAmount)}) per day — accrued for {dues.daysOverdue} day
+          {dues.daysOverdue === 1 ? '' : 's'} so far, and it stops growing the moment you repay.
         </p>
       )}
     </div>

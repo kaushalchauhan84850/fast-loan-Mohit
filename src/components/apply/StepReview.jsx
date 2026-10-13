@@ -1,24 +1,33 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LOAN_CONFIG, calculateEmi } from '../../utils/interest.js';
+import { LOAN_CONFIG, calculateLoanTerms } from '../../utils/interest.js';
 import { formatINR, formatDate } from '../../utils/format.js';
 import { maskPan } from '../../utils/validators.js';
 import Button from '../ui/Button.jsx';
 import { Checkbox } from '../ui/Input.jsx';
 import { IconShieldCheck, IconLock } from '../ui/Icons.jsx';
 
+function AddressLine({ address }) {
+  if (!address) return '—';
+  return [address.line1, address.line2, address.city, address.state, address.postalCode, address.country]
+    .filter(Boolean)
+    .join(', ');
+}
+
 /**
  * Step 5 — full disclosure review + consent checkboxes, then submit.
- * Shows rate, grace, penalty and total repayment (compliance requirement)
- * before the user commits.
+ * Shows the daily rate, due-date rule, grace/penalty terms and total
+ * repayment (compliance requirement) before the user commits.
  */
 export default function StepReview({ personal, loan, kyc, face, onBack, onSubmit, submitting }) {
   const [consents, setConsents] = useState({ kyc: false, data: false, terms: false });
   const [consentError, setConsentError] = useState(null);
 
-  const emi = calculateEmi(loan.amount, LOAN_CONFIG.monthlyInterestRate, loan.tenure);
-  const total = Math.round(emi * loan.tenure * 100) / 100;
-  const interest = Math.round((total - loan.amount) * 100) / 100;
+  // Preview assumes disbursement today; exact dates confirmed at disbursal.
+  const terms = useMemo(
+    () => calculateLoanTerms({ principal: loan.amount, disbursementDate: new Date() }),
+    [loan.amount]
+  );
 
   const allConsented = consents.kyc && consents.data && consents.terms;
 
@@ -36,9 +45,18 @@ export default function StepReview({ personal, loan, kyc, face, onBack, onSubmit
     ['Date of birth', formatDate(personal.dob)],
     ['Employment', (personal.employmentType || '').replace('-', ' ')],
     ['Monthly income', formatINR(personal.monthlyIncome)],
-    ['Address', `${personal.address}, ${personal.city}, ${personal.state} – ${personal.pincode}`],
+    ['Permanent address', <AddressLine key="perm" address={personal.permanentAddress} />],
+    [
+      'Current address',
+      personal.sameAsPermanent ? (
+        <span key="cur">
+          Same as permanent address <em className="text-navy-500">(auto-filled)</em>
+        </span>
+      ) : (
+        <AddressLine key="cur" address={personal.currentAddress} />
+      ),
+    ],
     ['Loan amount', formatINR(loan.amount)],
-    ['Tenure', `${loan.tenure} months`],
     ['Purpose', (loan.purpose || '').replace('-', ' ')],
     ['PAN', maskPan(kyc.pan)],
     ['Aadhaar', `XXXX XXXX ${kyc.aadhaarLast4}`],
@@ -54,22 +72,26 @@ export default function StepReview({ personal, loan, kyc, face, onBack, onSubmit
         </h3>
         <dl className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
           <div className="flex justify-between sm:block">
-            <dt className="text-emerald-800/80">Monthly EMI</dt>
-            <dd className="font-extrabold text-emerald-900 sm:text-lg">{formatINR(emi, { decimals: true })}</dd>
+            <dt className="text-emerald-800/80">Loan (single repayment)</dt>
+            <dd className="font-extrabold text-emerald-900 sm:text-lg">{formatINR(loan.amount)}</dd>
           </div>
           <div className="flex justify-between sm:block">
-            <dt className="text-emerald-800/80">Total interest ({LOAN_CONFIG.monthlyInterestRate * 100}%/mo reducing)</dt>
-            <dd className="font-extrabold text-emerald-900 sm:text-lg">{formatINR(interest, { decimals: true })}</dd>
+            <dt className="text-emerald-800/80">Interest (0.8%/day × {terms.interestDays} days)</dt>
+            <dd className="font-extrabold text-emerald-900 sm:text-lg">{formatINR(terms.interest, { decimals: true })}</dd>
           </div>
           <div className="flex justify-between sm:block">
             <dt className="text-emerald-800/80">Total repayment</dt>
-            <dd className="font-extrabold text-emerald-900 sm:text-lg">{formatINR(total, { decimals: true })}</dd>
+            <dd className="font-extrabold text-emerald-900 sm:text-lg">{formatINR(terms.totalRepayable, { decimals: true })}</dd>
           </div>
           <div className="flex justify-between sm:block">
+            <dt className="text-emerald-800/80">Due date (if disbursed today)</dt>
+            <dd className="font-semibold text-emerald-900 sm:text-sm">{formatDate(terms.dueDate)}</dd>
+          </div>
+          <div className="flex justify-between sm:block sm:col-span-2">
             <dt className="text-emerald-800/80">Late terms</dt>
-            <dd className="font-semibold text-emerald-900 sm:text-sm">
+            <dd className="text-right font-semibold text-emerald-900 sm:text-left sm:text-sm">
               {LOAN_CONFIG.gracePeriodDays}-day grace, then {LOAN_CONFIG.dailyPenaltyRate * 100}%/day
-              penalty on the overdue EMI
+              penalty on the overdue amount
             </dd>
           </div>
         </dl>
@@ -92,7 +114,7 @@ export default function StepReview({ personal, loan, kyc, face, onBack, onSubmit
         <Checkbox
           checked={consents.kyc}
           onChange={(e) => setConsents((c) => ({ ...c, kyc: e.target.checked }))}
-          label="I consent to KYC verification of my Aadhaar, PAN and selfie, including matching them with issuing-authority records."
+          label="I consent to KYC verification of my Aadhaar, PAN, addresses and selfie, including matching them with issuing-authority records."
         />
         <Checkbox
           checked={consents.data}
@@ -113,8 +135,9 @@ export default function StepReview({ personal, loan, kyc, face, onBack, onSubmit
           onChange={(e) => setConsents((c) => ({ ...c, terms: e.target.checked }))}
           label={
             <>
-              I have read the loan terms above — including the 2% monthly interest, 3-day grace
-              period and 0.1%-per-day late penalty — and accept the{' '}
+              I have read the loan terms above — including the 0.8%-per-day interest to the due date,
+              the 28th-of-month due-date rule, 3-day grace period and 0.1%-per-day late penalty —
+              and accept the{' '}
               <Link to="/terms" className="font-semibold text-emerald-700 underline underline-offset-2">
                 Terms of Service
               </Link>
@@ -133,7 +156,7 @@ export default function StepReview({ personal, loan, kyc, face, onBack, onSubmit
         <Button type="button" variant="outline" size="lg" onClick={onBack} disabled={submitting}>
           Back
         </Button>
-        <Button size="lg" onClick={handleSubmit} isLoading={submitting} disabled={!allConsented && submitting}>
+        <Button size="lg" onClick={handleSubmit} isLoading={submitting}>
           <IconLock size={17} /> Submit application
         </Button>
       </div>

@@ -61,22 +61,22 @@ export default function Signup() {
               error={errors.fullName?.message}
               {...register('fullName')}
             />
-            <div className="relative">
-              <Input
-                label="Mobile number"
-                required
-                type="tel"
-                inputMode="numeric"
-                maxLength={10}
-                autoComplete="tel-national"
-                placeholder="10-digit mobile"
-                error={errors.mobile?.message}
-                {...register('mobile')}
-              />
-              <span className="pointer-events-none absolute right-3.5 top-[34px] text-sm font-semibold text-navy-400">
-                🇮🇳 +91
-              </span>
-            </div>
+            <Input
+              label="Mobile number"
+              required
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              autoComplete="tel-national"
+              placeholder="10-digit mobile"
+              error={errors.mobile?.message}
+              rightElement={
+                <span className="pointer-events-none pr-1 text-sm font-semibold text-navy-400">
+                  🇮🇳 +91
+                </span>
+              }
+              {...register('mobile')}
+            />
             <Input
               label="Email address"
               required

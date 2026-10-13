@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from '../ui/Modal.jsx';
 import Button from '../ui/Button.jsx';
-import { formatINR } from '../../utils/format.js';
+import { formatINR, formatDate } from '../../utils/format.js';
 import { IconLock, IconInfo } from '../ui/Icons.jsx';
 
 const METHODS = [
@@ -11,15 +11,16 @@ const METHODS = [
 ];
 
 /**
- * Pay-now modal: pick a method, confirm, pay. In production this hands off
- * to a payment gateway (Razorpay/Cashfree) order session — mocked here.
+ * Pay-now modal: pick a method, confirm, repay the loan in full.
+ * In production this hands off to a payment gateway (Razorpay/Cashfree)
+ * order session — mocked here.
  */
-export default function PayNowModal({ open, onClose, dues, nextDue, onConfirm, paying }) {
+export default function PayNowModal({ open, onClose, dues, onConfirm, paying }) {
   const [method, setMethod] = useState('upi');
-  if (!dues || !nextDue) return null;
+  if (!dues) return null;
 
   return (
-    <Modal open={open} onClose={onClose} title={`Pay EMI ${nextDue.no}`}>
+    <Modal open={open} onClose={onClose} title="Repay your loan">
       <div className="rounded-xl bg-navy-50 p-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-navy-600">Total payable (incl. penalty)</span>
@@ -27,6 +28,7 @@ export default function PayNowModal({ open, onClose, dues, nextDue, onConfirm, p
             {formatINR(dues.totalPayable, { decimals: true })}
           </span>
         </div>
+        <p className="mt-1 text-xs text-navy-500">Due by {formatDate(dues.dueDate)}</p>
         {dues.penaltyAccrued > 0 && (
           <p className="mt-1 text-xs font-semibold text-amber-700">
             includes {formatINR(dues.penaltyAccrued)} late penalty ({dues.daysOverdue} day
@@ -69,7 +71,7 @@ export default function PayNowModal({ open, onClose, dues, nextDue, onConfirm, p
       <p className="mt-4 flex items-start gap-2 text-xs text-navy-500">
         <IconInfo size={14} className="mt-0.5 shrink-0" aria-hidden="true" />
         Demo checkout — no real money moves. In production this opens a secure payment-gateway
-        session and your EMI is marked paid on confirmation.
+        session and your loan is closed on confirmation.
       </p>
 
       <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

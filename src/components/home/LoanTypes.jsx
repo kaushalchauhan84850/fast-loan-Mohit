@@ -11,28 +11,28 @@ const LOAN_TYPES = [
     icon: IconUser,
     name: 'Personal loan',
     range: [10000, 500000],
-    tenure: '3–36 months',
-    desc: 'Weddings, travel, medical bills or consolidating expensive debt — one flat rate, no surprises.',
+    tenure: 'Due on the 28th',
+    desc: 'Weddings, travel, medical bills or consolidating expensive debt — one flat daily rate, no surprises.',
   },
   {
     icon: IconBriefcase,
     name: 'Business loan',
     range: [50000, 500000],
-    tenure: '3–24 months',
+    tenure: 'Due on the 28th',
     desc: 'Working capital, inventory or equipment. Quick decisions so you never miss an opportunity.',
   },
   {
     icon: IconBookOpen,
     name: 'Education loan',
     range: [20000, 300000],
-    tenure: '6–36 months',
-    desc: 'Course fees, laptops or living costs. Flexible EMIs that start after a simple approval.',
+    tenure: 'Due on the 28th',
+    desc: 'Course fees, laptops or living costs. One single repayment after a simple approval.',
   },
   {
     icon: IconHome,
     name: 'Home renovation',
     range: [30000, 500000],
-    tenure: '6–36 months',
+    tenure: 'Due on the 28th',
     desc: 'Repairs, upgrades or a fresh coat of paint. Funds in your bank within 24 hours of approval.',
   },
 ];
@@ -80,9 +80,11 @@ export default function LoanTypes() {
           ))}
         </div>
         <p className="mt-8 text-center text-sm text-navy-500">
-          All loans: <strong className="text-navy-800">2% per month</strong> (reducing balance) ·{' '}
-          <strong className="text-navy-800">3-day grace</strong> on EMI due dates ·{' '}
-          <strong className="text-navy-800">0.1% per day</strong> penalty on overdue EMIs after grace.
+          All loans: <strong className="text-navy-800">0.8% per day</strong> to the due date · single
+          repayment on the <strong className="text-navy-800">28th</strong> ·{' '}
+          <strong className="text-navy-800">3-day grace</strong> ·{' '}
+          <strong className="text-navy-800">0.1% per day</strong> penalty on the overdue amount after
+          grace.
         </p>
       </div>
     </section>

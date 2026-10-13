@@ -11,9 +11,16 @@
  * Aadhaar/PAN only in encrypted vaults. The frontend never persists full
  * Aadhaar numbers anywhere (see KYC flow).
  */
-import { LOAN_CONFIG, buildEmiSchedule, calculateEmi, dateOnly, addMonths, isoDate, round2 } from '../utils/interest.js';
+import {
+  LOAN_CONFIG,
+  calculateLoanTerms,
+  calculateDues,
+  dateOnly,
+  isoDate,
+} from '../utils/interest.js';
 
-const DB_KEY = 'tl_mock_db_v1';
+const DB_KEY = 'tl_mock_db_v2'; // v2: single-cycle loans + KYC addresses (reseeds)
+
 const MIN_LATENCY = 250;
 const MAX_LATENCY = 650;
 
@@ -37,22 +44,25 @@ export function randomId(prefix = 'id') {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
 }
 
+function addDays(date, days) {
+  const d = dateOnly(date);
+  d.setDate(d.getDate() + days);
+  return d;
+}
+
+const DEMO_ADDRESS = {
+  line1: '14, Rose Villa, MG Road',
+  line2: 'Near SBI ATM',
+  city: 'Pune',
+  state: 'Maharashtra',
+  postalCode: '411001',
+  country: 'India',
+};
+
 /* ------------------------------- seed data ------------------------------- */
 
 function seedDb() {
   const now = new Date();
-
-  // Demo loan: EMI #1 paid on time, EMI #2 due 6 days ago
-  // (3 days past grace → penalty accrues, so the late-fee UI is visible).
-  const emi2Due = dateOnly(now);
-  emi2Due.setDate(emi2Due.getDate() - 6);
-  const startDate = addMonths(emi2Due, -1);
-
-  const principal = 200000;
-  const rate = LOAN_CONFIG.monthlyInterestRate;
-  const tenure = 12;
-  const schedule = buildEmiSchedule(principal, rate, tenure, startDate);
-  const emi1 = schedule[0];
 
   const demoUser = {
     id: 'u_demo',
@@ -64,33 +74,46 @@ function seedDb() {
     createdAt: new Date(now.getTime() - 90 * 86400000).toISOString(),
   };
 
-  const loan = {
-    id: 'l_demo',
+  // Closed loan: disbursed 70 days ago, repaid in full one day before its due date.
+  const paidDisbursed = addDays(now, -70);
+  const paidTerms = calculateLoanTerms({ principal: 60000, disbursementDate: paidDisbursed });
+  const paidLoan = {
+    id: 'l_paid',
     userId: demoUser.id,
-    principal,
-    monthlyInterestRate: rate,
-    tenure,
-    startDate: isoDate(startDate),
-    purpose: 'personal',
-    status: 'active',
-    disbursedAt: isoDate(startDate),
+    principal: 60000,
+    disbursementDate: isoDate(paidDisbursed),
+    dueDate: paidTerms.dueDate,
+    purpose: 'education',
+    status: 'closed',
+    closedAt: new Date(dateOnly(paidTerms.dueDate).getTime() - 86400000).toISOString(),
   };
 
-  const paidAt = dateOnly(addMonths(startDate, 1));
-  paidAt.setDate(paidAt.getDate() - 1); // paid one day before due
+  // Active loan: disbursed 50 days ago → due on a 28th that is at least 7 days
+  // in the past (max window is 16th→next 28th = 43 days), so the overdue
+  // penalty breakdown is always visible on the demo dashboard.
+  const activeDisbursed = addDays(now, -50);
+  const activeTerms = calculateLoanTerms({ principal: 200000, disbursementDate: activeDisbursed });
+  const activeLoan = {
+    id: 'l_demo',
+    userId: demoUser.id,
+    principal: 200000,
+    disbursementDate: isoDate(activeDisbursed),
+    dueDate: activeTerms.dueDate,
+    purpose: 'personal',
+    status: 'active',
+  };
 
   const payments = [
     {
       id: 'p_demo1',
       userId: demoUser.id,
-      loanId: loan.id,
-      emiNo: 1,
-      amount: emi1.emi,
-      principal: emi1.principal,
-      interest: emi1.interest,
+      loanId: paidLoan.id,
+      amount: paidTerms.totalRepayable,
+      principal: paidLoan.principal,
+      interest: paidTerms.interest,
       penalty: 0,
       method: 'upi',
-      paidAt: paidAt.toISOString(),
+      paidAt: new Date(dateOnly(paidTerms.dueDate).getTime() - 86400000).toISOString(),
     },
   ];
 
@@ -100,7 +123,6 @@ function seedDb() {
     sessions: {}, // token -> { userId, createdAt }
     applications: [
       {
-        // A second, in-flight application (top-up) so the status tracker has content.
         id: 'a_demo',
         userId: demoUser.id,
         personal: {
@@ -108,12 +130,16 @@ function seedDb() {
           dob: '1993-04-18',
           employmentType: 'salaried',
           monthlyIncome: 65000,
-          address: '14, Rose Villa, MG Road',
-          city: 'Pune',
-          state: 'Maharashtra',
-          pincode: '411001',
+          permanentAddress: DEMO_ADDRESS,
+          sameAsPermanent: false,
+          currentAddress: {
+            ...DEMO_ADDRESS,
+            line1: '7B, Sunrise Apartments, Koregaon Park',
+            city: 'Pune',
+            postalCode: '411001',
+          },
         },
-        loan: { amount: 150000, tenure: 12, purpose: 'personal' },
+        loan: { amount: 150000, purpose: 'personal' },
         kyc: {
           pan: 'ABCDE1234F',
           aadhaarLast4: '2346',
@@ -121,12 +147,18 @@ function seedDb() {
           aadhaarDocRef: 'DOC_demo_aadhaar',
           selfieRef: 'DOC_demo_selfie',
           faceVerified: true,
+          // Both addresses are part of the KYC record
+          permanentAddress: DEMO_ADDRESS,
+          currentAddress: {
+            ...DEMO_ADDRESS,
+            line1: '7B, Sunrise Apartments, Koregaon Park',
+          },
         },
         status: 'under_review',
         submittedAt: new Date(now.getTime() - 4 * 3600 * 1000).toISOString(),
       },
     ],
-    loans: [loan],
+    loans: [activeLoan, paidLoan],
     payments,
   };
 }

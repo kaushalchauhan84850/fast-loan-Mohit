@@ -19,8 +19,8 @@ const DETAILS = [
     icon: IconShieldCheck,
     title: '2. Verify KYC',
     points: [
-      'Upload Aadhaar and PAN (JPG, PNG or PDF)',
-      'Numbers are validated instantly — Aadhaar checksum included',
+      'Give your permanent and current/destination address',
+      'Upload Aadhaar and PAN (JPG, PNG or PDF) — checksum-validated',
       'Confirm it is really you with a selfie + liveness check',
     ],
   },
@@ -28,8 +28,8 @@ const DETAILS = [
     icon: IconFileText,
     title: '3. Apply',
     points: [
-      'Choose amount (₹10k–₹5L) and tenure (3–36 months)',
-      'See your EMI, interest and total repayment live',
+      'Choose your amount (₹10k–₹5L) — single repayment, no EMIs',
+      'See your due date (28th rule), interest days and total live',
       'Accept the disclosed terms and submit',
     ],
   },

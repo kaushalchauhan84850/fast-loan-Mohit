@@ -9,7 +9,7 @@ import { CardSkeleton, TableSkeleton } from '../components/ui/Skeleton.jsx';
 import ApplicationTracker from '../components/dashboard/ApplicationTracker.jsx';
 import LoanSummaryCard from '../components/dashboard/LoanSummaryCard.jsx';
 import LateFeeBreakdown from '../components/dashboard/LateFeeBreakdown.jsx';
-import EmiScheduleTable from '../components/dashboard/EmiScheduleTable.jsx';
+import RepaymentSummary from '../components/dashboard/RepaymentSummary.jsx';
 import PaymentHistory from '../components/dashboard/PaymentHistory.jsx';
 import PayNowModal from '../components/dashboard/PayNowModal.jsx';
 import Button from '../components/ui/Button.jsx';
@@ -46,11 +46,11 @@ export default function Dashboard() {
       setPayOpen(false);
       if (result.daysOverdue > 0) {
         toast.success({
-          title: 'Payment successful',
-          message: `EMI paid. A late penalty of the accrued amount was included (${result.daysOverdue} days overdue).`,
+          title: 'Loan repaid in full',
+          message: `Payment received, including the accrued late penalty (${result.daysOverdue} days overdue).`,
         });
       } else {
-        toast.success({ title: 'Payment successful', message: 'Your EMI has been paid on time.' });
+        toast.success({ title: 'Loan repaid in full', message: 'Paid on time — no penalty charged.' });
       }
       await load();
     } catch (err) {
@@ -88,38 +88,33 @@ export default function Dashboard() {
             )}
 
             {/* active loan */}
-            {data.loan && data.schedule ? (
+            {data.loan && data.dues ? (
               <div className="grid items-start gap-6 lg:grid-cols-2">
                 <div className="space-y-6">
-                  <LoanSummaryCard
-                    loan={data.loan}
-                    schedule={data.schedule}
-                    nextDue={data.nextDue}
-                    outstanding={data.outstanding}
-                    onPayNow={() => setPayOpen(true)}
-                  />
-                  {data.nextDue && data.dues && (
-                    <LateFeeBreakdown loan={data.loan} nextDue={data.nextDue} />
-                  )}
+                  <LoanSummaryCard loan={data.loan} dues={data.dues} onPayNow={() => setPayOpen(true)} />
+                  <LateFeeBreakdown loan={data.loan} dues={data.dues} />
                 </div>
                 <div className="space-y-6">
-                  <EmiScheduleTable schedule={data.schedule} />
+                  <RepaymentSummary loan={data.loan} dues={data.dues} />
                   <PaymentHistory payments={data.payments} />
                 </div>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-navy-200 bg-white p-10 text-center">
-                <p className="text-base font-bold text-navy-950">No active loan yet</p>
-                <p className="mx-auto mt-1 max-w-md text-sm text-navy-600">
-                  {data.application
-                    ? 'Your application is being processed — you will see loan details here as soon as it is disbursed.'
-                    : 'Ready when you are. Apply in five quick steps and get funds within 24 hours of approval.'}
-                </p>
-                {!data.application && (
-                  <Button to="/apply" size="lg" className="mt-6">
-                    Apply for a loan <IconArrowRight size={17} />
-                  </Button>
-                )}
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-dashed border-navy-200 bg-white p-10 text-center">
+                  <p className="text-base font-bold text-navy-950">No active loan</p>
+                  <p className="mx-auto mt-1 max-w-md text-sm text-navy-600">
+                    {data.application
+                      ? 'Your application is being processed — details will appear here as soon as it is disbursed.'
+                      : 'Ready when you are. Apply in five quick steps and get funds within 24 hours of approval.'}
+                  </p>
+                  {!data.application && (
+                    <Button to="/apply" size="lg" className="mt-6">
+                      Apply for a loan <IconArrowRight size={17} />
+                    </Button>
+                  )}
+                </div>
+                {data.payments.length > 0 && <PaymentHistory payments={data.payments} />}
               </div>
             )}
 
@@ -138,7 +133,6 @@ export default function Dashboard() {
         open={payOpen}
         onClose={() => setPayOpen(false)}
         dues={data?.dues}
-        nextDue={data?.nextDue}
         onConfirm={handlePay}
         paying={paying}
       />

@@ -26,9 +26,11 @@ function Hint({ children }) {
 /**
  * Labelled text input wired for React Hook Form register():
  * <Input label="Email" type="email" error={errors.email?.message} {...register('email')} />
+ * `rightElement` renders inside the input row (e.g. a show-password button),
+ * vertically centred on the field itself.
  */
 export const Input = forwardRef(function Input(
-  { label, error, hint, icon: Icon, className = '', ...props },
+  { label, error, hint, icon: Icon, rightElement, className = '', ...props },
   ref
 ) {
   const id = useId();
@@ -50,11 +52,16 @@ export const Input = forwardRef(function Input(
         <input
           ref={ref}
           id={props.id ?? id}
-          className={`${fieldClasses(!!error)} ${Icon ? 'pl-11' : ''}`}
+          className={`${fieldClasses(!!error)} ${Icon ? 'pl-11' : ''} ${rightElement ? 'pr-11' : ''}`}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={error ? errorId : undefined}
           {...props}
         />
+        {rightElement && (
+          <span className="absolute right-2.5 top-1/2 flex -translate-y-1/2 items-center">
+            {rightElement}
+          </span>
+        )}
       </div>
       <ErrorText id={errorId}>{error}</ErrorText>
       <Hint>{hint}</Hint>

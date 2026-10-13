@@ -9,9 +9,9 @@ const INCLUSIONS = [
   'No processing fee',
   'No prepayment penalty',
   'No hidden charges',
-  '3-day grace on every EMI',
-  'Zero foreclosure charges',
-  'EMI reminders by SMS',
+  '3-day grace after the due date',
+  'Interest stops on the due date',
+  'Due-date reminders by SMS',
 ];
 
 export default function Loans() {
@@ -25,8 +25,8 @@ export default function Loans() {
             One rate. Every loan. Full transparency.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-navy-300">
-            Whether it's a wedding, working capital or a course fee — every TrustLend loan carries
-            the same honest terms.
+            Whether it's a wedding, working capital or a course fee — every TrustLend loan is a
+            single-cycle loan with the same honest, daily-rate terms.
           </p>
         </div>
       </section>
@@ -47,12 +47,13 @@ export default function Loans() {
             <table className="w-full text-sm">
               <tbody className="divide-y divide-navy-100">
                 {[
-                  ['Monthly interest rate', `${LOAN_CONFIG.monthlyInterestRate * 100}% per month (reducing balance)`],
+                  ['Daily interest rate', `${LOAN_CONFIG.dailyInterestRate * 100}% per day, from disbursement to the due date`],
                   ['Loan amount', `₹10,000 – ₹5,00,000`],
-                  ['Tenure', `${LOAN_CONFIG.minTenureMonths} – ${LOAN_CONFIG.maxTenureMonths} months`],
+                  ['Tenure', 'One billing cycle — a single repayment'],
+                  ['Repayment due date', '28th of the month (same month if disbursed on the 1st–15th, next month if on the 16th or later)'],
                   ['Processing fee', '₹0'],
-                  ['Grace period', `${LOAN_CONFIG.gracePeriodDays} days after every EMI due date`],
-                  ['Late payment penalty', `${LOAN_CONFIG.dailyPenaltyRate * 100}% of the overdue EMI per day, until paid`],
+                  ['Grace period', `${LOAN_CONFIG.gracePeriodDays} days after the due date`],
+                  ['Late payment penalty', `${LOAN_CONFIG.dailyPenaltyRate * 100}% of the overdue amount per day, until paid`],
                   ['Prepayment / foreclosure', 'Free, any time'],
                 ].map(([label, value]) => (
                   <tr key={label}>
@@ -78,7 +79,7 @@ export default function Loans() {
 
       <section className="bg-navy-50/60 py-16 sm:py-20">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <SectionHeading eyebrow="Try it" title="Calculate your EMI" />
+          <SectionHeading eyebrow="Try it" title="Calculate your repayment" />
           <div className="mt-10">
             <EmiCalculator />
           </div>
